@@ -12,25 +12,19 @@ import Loading from './pages/Loading'
 
 const App = () => {
   return (
-    <div className='min-h-screen bg-slate-50 text-slate-900 font-sans'>
-      {/* Toast notifications */}
-      <Toaster position="top-right" reverseOrder={false} />
+    <div>
 
-      {/* Navigation Bar */}
-
-      <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/my-listings" element={<MyListings />} />
-          <Route path="/listing/:listingId" element={<ListingDetails />} />
-          <Route path="/create-listing" element={<ManageListing />} />
-          <Route path="/edit-listing/:id" element={<ManageListing />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/my-orders" element={<MyOrders />} />
-          <Route path="/loading" element={<Loading />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/my-listings" element={<MyListings />} />
+        <Route path="/listing/:listingId" element={<ListingDetails />} />
+        <Route path="/create-listing" element={<ManageListing />} />
+        <Route path="/edit-listing/:id" element={<ManageListing />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/my-orders" element={<MyOrders />} />
+        <Route path="/loading" element={<Loading />} />
+      </Routes>
     </div>
   )
 }
