@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, MessageCircle, User, Menu, X, PlusCircle, LayoutGrid, Search } from 'lucide-react';
+import { ShoppingBag, MessageCircle, Menu, X, LayoutGrid } from 'lucide-react';
 import { assets } from '../assets/assets';
 
 const Navbar = () => {
@@ -61,21 +61,11 @@ const Navbar = () => {
 
           {/* Action Buttons */}
           <div className="hidden md:flex items-center gap-5">
-            <div className="relative group">
-              <Search className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 cursor-pointer transition-colors" />
-            </div>
             <Link
-              to="/create-listing"
-              className="bg-indigo-600 text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 hover:shadow-indigo-200 active:scale-95"
+              to="/login"
+              className="bg-indigo-600 text-white px-8 py-2.5 rounded-full text-sm font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 hover:shadow-indigo-200 active:scale-95"
             >
-              Sell Account
-            </Link>
-            <Link
-              to="/my-orders"
-              className="p-2.5 rounded-full bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-gray-100"
-              title="My Profile"
-            >
-              <User className="w-5 h-5" />
+              Login
             </Link>
           </div>
 
@@ -114,18 +104,11 @@ const Navbar = () => {
           ))}
           <div className="pt-6 flex flex-col gap-6 pr-3">
             <Link
-              to="/create-listing"
+              to="/login"
               onClick={() => setIsOpen(false)}
               className=" bg-indigo-600 text-white text-center py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100"
             >
-              Sell Account
-            </Link>
-            <Link
-              to="/my-orders"
-              onClick={() => setIsOpen(false)}
-              className="w-full bg-gray-50 text-gray-700 text-center py-4 rounded-2xl font-semibold border border-gray-100 hover:bg-gray-100 transition-colors"
-            >
-              My Profile
+              Login
             </Link>
           </div>
         </div>
