@@ -40,6 +40,26 @@ const FilteredSidebar = ({ showFilterPhone, setshowFilterPhone, filters, setFilt
     setFilters({ ...filters, ...newFilters })
   }
 
+  const onClearFilters = () => {
+    if (search) {
+      navigate("/marketplace")
+    }
+    setFilters({
+      platform: null,
+      maxPrice: 1000000,
+      minFollowers: 0,
+      niche: null,
+      verified: false,
+      monetized: false,
+    })
+  }
+
+
+
+
+
+
+
   // arrays//
   const platforms = [
     { value: "instagram", label: "Instagram" },
@@ -78,7 +98,7 @@ const FilteredSidebar = ({ showFilterPhone, setshowFilterPhone, filters, setFilt
           </div>
 
           <div className='flex items-center gap-2'>
-            <X onClick={() => setshowFilterPhone(false)} className='size-6 text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded transition-colors cursor-pointer' />
+            <X onClick={() => onClearFilters()} className='size-6 text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded transition-colors cursor-pointer' />
             <button onClick={() => setshowFilterPhone(false)} className='sm:hidden text-sm border text-gray-700 px-3 py-1 rounded'>Apply</button>
           </div>
         </div>
@@ -203,7 +223,7 @@ const FilteredSidebar = ({ showFilterPhone, setshowFilterPhone, filters, setFilt
               {/* verified account */}
               <label className='flex items-center space-x-2 cursor-pointer'>
                 <input type="checkbox" checked={filters.verified || false}
-                  onChange={(e) => onFilterChange({ ...Filter, verified: e.target.checked })} />
+                  onChange={(e) => onFilterChange({ verified: e.target.checked })} />
                 <span className='text-sm text-gray-700'>Verified Accounts Only</span>
               </label>
 
@@ -212,7 +232,7 @@ const FilteredSidebar = ({ showFilterPhone, setshowFilterPhone, filters, setFilt
 
               <label className='flex items-center space-x-2 cursor-pointer'>
                 <input type="checkbox" checked={filters.monetized || false}
-                  onChange={(e) => onFilterChange({ ...Filter, monetized: e.target.checked })} />
+                  onChange={(e) => onFilterChange({ monetized: e.target.checked })} />
                 <span className='text-sm text-gray-700'>Monetized Accounts Only</span>
               </label>
 
