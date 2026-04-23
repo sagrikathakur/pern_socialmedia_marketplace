@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, CheckCircle2, DollarSign, Loader2Icon } from 'lucide-react'
+import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Loader2Icon } from 'lucide-react'
 import { getProfileLink, platformIcons } from '../assets/assets'
 
 
@@ -15,6 +15,20 @@ const ListingDetails = () => {
 
   const { listingId } = useParams()
   const { listings } = useSelector((state) => state.listing)
+
+
+  const [current, setCurrent] = useState(0)
+  const images = listing?.images || []
+
+
+
+  const prevSlide = () => setCurrent((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+  const nextSlide = () => setCurrent((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+
+
+
+
+
 
 
   useEffect(() => {
@@ -134,6 +148,93 @@ const ListingDetails = () => {
 
 
           </div>
+
+          {/* screen shot section */}
+
+
+          {images?.length > 0 && (
+            <div className='bg-white rounded-xl border border-gray-200 mb-5 overflow-hidden'>
+              <div className='p-4'>
+                <h4 className='font-semibold text-gray-800'> Screenshots & Proof
+
+                </h4>
+              </div>
+              {/* slider container  */}
+
+              <div className='relative w-full aspect-video overflow-hidden'>
+                <div className='flex transition-transform duration-300 ease-in-out '
+                  style={{ transform: `translateX(-${current * 100}%)` }}>
+                  {images.map((img, index) => (
+                    <img
+                      key={index}
+                      src={img}
+                      alt='listing proof'
+                      className='w-full shrink-0'
+                    />
+
+                  ))}
+                </div>
+
+                {/* buttons  */}
+
+                <button className='absolute left-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white p-2 rounded-full shadow' onClick={prevSlide}>
+                  <ChevronLeftIcon className='w-5 h-5 text-gray-700' />
+
+
+
+                </button>
+
+
+                <button className='absolute right-3 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white p-2 rounded-full shadow' onClick={nextSlide}>
+
+
+
+                  <ChevronRightIcon className='w-5 h-5 text-gray-700' />
+
+
+
+                </button>
+
+                {/* dot indicators */}
+                <div className='absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2'>
+                  {
+                    images.map((_, index) => (
+                      <button key={index}
+                        onClick={() => setCurrent(index)}
+                        className={`w-2.5 h-2.5 rounded-full ${current === index ? 'bg-indigo-600' : 'bg-gray-300'}`}>
+
+                      </button>
+                    ))
+                  }
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+              </div>
+
+
+
+
+
+
+            </div>
+          )}
+
+
+
+
+
+
+
+
         </div>
 
         {/* seller info and purchase options */}
