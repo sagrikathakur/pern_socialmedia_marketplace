@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Loader2Icon } from 'lucide-react'
+import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, Calendar, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Eye, Globe, LineChart, Loader2Icon, ShieldCheck, Tag, Users } from 'lucide-react'
 import { getProfileLink, platformIcons } from '../assets/assets'
 
 
@@ -47,7 +47,7 @@ const ListingDetails = () => {
       </button>
 
       {/* another section */}
-      <div className='flex items-start max:md:flex-col gap-10'>
+      <div className='flex items-start flex-col md:flex-row gap-10'>
         <div className='flex-1 max-md:w-full '>
           {/* top */}
 
@@ -229,16 +229,118 @@ const ListingDetails = () => {
           )}
 
 
+          {/* account matrics */}
 
 
+          <div className='bg-white rounded-xl border border-gray-200 mb-5'>
+            <div className='p-4 border-b border-gray-100'>
+              <h4 className='font-semibold text-gray-800'> Account Matrics</h4>
 
+            </div>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 p-4 text-center'>
+              <div>
+                <Users className='mx-auto text-gray-400 w-5 h-5 m-1' />
+                <p className='font-semibold text-gray-800'>{listing.followers_count?.toLocaleString()}</p>
+                <p className='text-xs text-gray-500'> follwers</p>
+              </div>
+              <div>
+                <LineChart className='mx-auto text-gray-400 w-5 h-5 m-1' />
+                <p className='font-semibold text-gray-800'>{listing.engagement_rate}%</p>
+                <p className='text-xs text-gray-500'> Engagement</p>
+              </div>
+              <div>
+                <Eye className='mx-auto text-gray-400 w-5 h-5 m-1' />
+                <p className='font-semibold text-gray-800'>{listing.monthly_views?.toLocaleString()}</p>
+                <p className='text-xs text-gray-500'>Monthly Views</p>
+              </div>
+              <div>
+                <Calendar className='mx-auto text-gray-400 w-5 h-5 m-1' />
+                <p className='font-semibold text-gray-800'>{new Date(listing.createdAt).toLocaleDateString()}</p>
+                <p className='text-xs text-gray-500'> Listed</p>
+              </div>
+
+            </div>
+          </div>
+
+
+          {/* description section */}
+
+          <div className='bg-white rounded-xl border border-gray-200 mb-5'>
+            <div className='p-4 border-b border-gray-100'>
+              <h4 className='font-semibold text-gray-800'>Description</h4>
+            </div>
+            <div className='p-4 text-sm text-gray-600 '> {listing.description}</div>
+          </div>
+          <div className='bg-white rounded-xl border border-gray-200 mb-5'>
+            <div className='p-4 border-b border-gray-100'>
+              <h4 className='font-semibold text-gray-800'>Additional Details</h4>
+            </div>
+            <div className='p-4 grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2 text-gray-500'>
+                  <Tag className='size-4' />
+                  <span className='text-sm'>Niche</span>
+                </div>
+                <span className='text-sm font-medium text-gray-800 capitalize'>{listing.niche}</span>
+              </div>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2 text-gray-500'>
+                  <Globe className='size-4' />
+                  <span className='text-sm'>Audience Location</span>
+                </div>
+                <span className='text-sm font-medium text-gray-800'>{listing.country}</span>
+              </div>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2 text-gray-500'>
+                  <Users className='size-4' />
+                  <span className='text-sm'>Age Range</span>
+                </div>
+                <span className='text-sm font-medium text-gray-800'>{listing.age_range}</span>
+              </div>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2 text-gray-500'>
+                  <ShieldCheck className='size-4' />
+                  <span className='text-sm'>Platform Assured</span>
+                </div>
+                <span className={`text-sm font-medium ${listing.platformAssured ? 'text-green-600' : 'text-gray-500'}`}>
+                  {listing.platformAssured ? 'Yes' : 'No'}
+                </span>
+              </div>
+            </div>
+          </div>
 
 
 
         </div>
 
-        {/* seller info and purchase options */}
-        <div></div>
+        <div className='w-full md:w-80 space-y-5 sticky top-5'>
+          {/* Seller Card */}
+          <div className='bg-white rounded-xl border border-gray-200 p-6'>
+            <h4 className='font-semibold text-gray-800 mb-4'>Seller Information</h4>
+            <div className='flex items-center gap-4 mb-4'>
+              <img src={listing.owner?.image} alt={listing.owner?.name} className='size-12 rounded-full object-cover' />
+              <div>
+                <p className='font-bold text-gray-800'>{listing.owner?.name}</p>
+                <p className='text-xs text-gray-500'>Member since {new Date(listing.owner?.createdAt).getFullYear()}</p>
+              </div>
+            </div>
+            <button className='w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100'>
+              Contact Seller
+            </button>
+          </div>
+
+          {/* Safety Tips */}
+          <div className='bg-indigo-50 rounded-xl p-5 border border-indigo-100'>
+            <h4 className='font-semibold text-indigo-900 mb-2 flex items-center gap-2'>
+              <ShieldCheck className='size-4' /> Buying Safely
+            </h4>
+            <ul className='text-xs text-indigo-700 space-y-2 list-disc pl-4'>
+              <li>Always use our platform for payments</li>
+              <li>Don't share sensitive credentials off-platform</li>
+              <li>Verify account ownership before final payment</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
 
