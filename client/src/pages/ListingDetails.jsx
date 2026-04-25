@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, Calendar, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Eye, Globe, LineChart, Loader2Icon, ShieldCheck, Tag, Users } from 'lucide-react'
+import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, Calendar, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Eye, Globe, LineChart, Loader2Icon, MessageSquareIcon, ShieldCheck, Tag, Users } from 'lucide-react'
 import { getProfileLink, platformIcons } from '../assets/assets'
 
 
@@ -10,33 +10,24 @@ const ListingDetails = () => {
   const navigate = useNavigate()
   const currency = import.meta.env.VITE_CURRENCY || '$'
 
-  const [listing, setListing] = useState(null)
-  const profileLink = listing && getProfileLink(listing.platform, listing.username)
-
   const { listingId } = useParams()
   const { listings } = useSelector((state) => state.listing)
 
+  const listing = listings.find((item) => item.id === listingId) || null;
+  const profileLink = listing && getProfileLink(listing.platform, listing.username)
 
   const [current, setCurrent] = useState(0)
   const images = listing?.images || []
-
-
 
   const prevSlide = () => setCurrent((prev) => (prev === 0 ? images.length - 1 : prev - 1))
   const nextSlide = () => setCurrent((prev) => (prev === images.length - 1 ? 0 : prev + 1))
 
 
+  const purchaseAccount = async () => {
+
+  }
 
 
-
-
-
-  useEffect(() => {
-    const listing = listings.find((listing) => listing.id === listingId);
-    if (listing) {
-      setListing(listing)
-    }
-  }, [listingId, listings])
 
 
   return listing ? (
@@ -70,7 +61,7 @@ const ListingDetails = () => {
 
                 <div>
                   <h2 className='flex items-center gap-2 text-xl font-semibold text-gray-800'>{listing.title}
-                    <Link target='_blank' to={profileLink}>
+                    <Link target='_blank' to={profileLink || '#'}>
 
                       <ArrowUpRightFromSquareIcon className='size-4 hover:text-indigo-500' />
 
@@ -83,7 +74,7 @@ const ListingDetails = () => {
                     </Link>
                   </h2>
                   <p className='text-gray-500 text-sm'>
-                    @{listing.username} • {listing.platform?.charAt(0).toUpperCase() + listing.platform.slice(1)}
+                    @{listing.username} • {listing.platform ? listing.platform.charAt(0).toUpperCase() + listing.platform.slice(1) : ''}
                   </p>
 
                   <div className='flex gap-2 mt-2 '>
@@ -234,14 +225,14 @@ const ListingDetails = () => {
 
           <div className='bg-white rounded-xl border border-gray-200 mb-5'>
             <div className='p-4 border-b border-gray-100'>
-              <h4 className='font-semibold text-gray-800'> Account Matrics</h4>
+              <h4 className='font-semibold text-gray-800'> Account Metrics</h4>
 
             </div>
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4 p-4 text-center'>
               <div>
                 <Users className='mx-auto text-gray-400 w-5 h-5 m-1' />
                 <p className='font-semibold text-gray-800'>{listing.followers_count?.toLocaleString()}</p>
-                <p className='text-xs text-gray-500'> follwers</p>
+                <p className='text-xs text-gray-500'> followers</p>
               </div>
               <div>
                 <LineChart className='mx-auto text-gray-400 w-5 h-5 m-1' />
@@ -324,39 +315,42 @@ const ListingDetails = () => {
                 <p className='text-xs text-gray-500'>Member since {new Date(listing.owner?.createdAt).getFullYear()}</p>
               </div>
             </div>
-            <button className='w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100'>
-              Contact Seller
+            <button onClick={loadChatbox}
+
+              className='w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium flex items-center justify-center gap-2'>
+              <MessageSquareIcon className='size-4' />
+              Chat
             </button>
+            {
+              listing.isCredentialChanged && (
+                <button onClick={purchaseAccount}
+                  className="w-full mt-2 bg-purple-600 text-white py-2 rounded-lg py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium flex items-center justify-center gap-2">
+                  <MessageSquareIcon className='size-4' />
+                  Purchase
+                </button>
+              )
+            }
           </div>
 
-          {/* Safety Tips */}
-          <div className='bg-indigo-50 rounded-xl p-5 border border-indigo-100'>
-            <h4 className='font-semibold text-indigo-900 mb-2 flex items-center gap-2'>
-              <ShieldCheck className='size-4' /> Buying Safely
-            </h4>
-            <ul className='text-xs text-indigo-700 space-y-2 list-disc pl-4'>
-              <li>Always use our platform for payments</li>
-              <li>Don't share sensitive credentials off-platform</li>
-              <li>Verify account ownership before final payment</li>
-            </ul>
-          </div>
         </div>
+
+
+
+
       </div>
 
 
 
+      {/* footer */}
+      <div className='bg-white border-t border-gray-200 p-4 text-center mt-28 '>
+        <p className='text-sm text-gray-500'> 2026<span className='text-indigo-600'>sagrika</span> All Rights Reserved</p>
+      </div>
 
 
-
-
-
-
-    </div >
+    </div>
   ) : (
     <div className='h-screen flex justify-center items-center'>
       <Loader2Icon className='size-7 animate-spin text-indigo-600' />
-
-
     </div>
   )
 }
