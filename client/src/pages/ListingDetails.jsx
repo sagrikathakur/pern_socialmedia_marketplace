@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, Calendar, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Eye, Globe, LineChart, Loader2Icon, MessageSquareIcon, ShieldCheck, Tag, Users } from 'lucide-react'
 import { getProfileLink, platformIcons } from '../assets/assets'
+import { setChat } from '../App/features/chatSlice'
 
 
 const ListingDetails = () => {
+
+  const dispatch = useDispatch()
 
   const navigate = useNavigate()
   const currency = import.meta.env.VITE_CURRENCY || '$'
@@ -27,6 +30,9 @@ const ListingDetails = () => {
 
   }
 
+  const loadChatbox = () => {
+    dispatch(setChat({ listing: listing }))
+  }
 
 
 

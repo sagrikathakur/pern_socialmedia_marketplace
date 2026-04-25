@@ -10,6 +10,7 @@ import MyOrders from './pages/MyOrders'
 import { Toaster } from 'react-hot-toast'
 import Loading from './pages/Loading'
 import Navbar from './Components/Navbar'
+import ChatBox from './Components/ChatBox'
 
 const App = () => {
   const { pathname } = useLocation();
@@ -18,7 +19,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-white">
       <Toaster position="top-center" />
-      
+
       {!pathname.includes('/admin') && <Navbar />}
 
       <div className={!pathname.includes('/admin') && pathname !== '/' ? 'pt-24' : ''}>
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/my-orders" element={<MyOrders />} />
           <Route path="/loading" element={<Loading />} />
         </Routes>
+        <ChatBox />
       </div>
     </div>
   )
