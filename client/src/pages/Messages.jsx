@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { dummyChats } from '../assets/assets';
 import { MessageCircle, Search } from 'lucide-react';
 import format from 'date-fns/format';
 import isToday from 'date-fns/isToday';
 import isYesterday from 'date-fns/isYesterday';
 import parseISO from 'date-fns/parseISO';
+import { useDispatch } from 'react-redux';
+import { setChat } from '../App/features/chatSlice';
 
 const Messages = () => {
+  const dispatch = useDispatch()
   const user = { id: "user_1" };
   const [chats, setChats] = useState([])
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +29,36 @@ const Messages = () => {
 
     return format(date, 'MMM d');
   }
+
+  // filter//
+
+  const filteredChats = useMemo(() => {
+    const query = searchQuery.toLowerCase();
+
+
+    return chats.filter((chat) => {
+      const chatUser = chat.chatUserId === user.id ? chat.ownerUser : chat.chatUser;
+
+      return chat.listing?.title?.toLowerCase().includes(query) || chatUser?.name?.toLowerCase().includes(query);
+    })
+  }, [chats, searchQuery])
+
+
+  // open chat//
+
+  const handleOpenChat = (chat) => {
+    dispatch(setChat({ listing: chat.listing, chatId: chat.id }))
+  }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -67,7 +100,7 @@ const Messages = () => {
         {
           loading ? (
             < div className='text-center text-gray-500 py-20'>Loading messages...</div>
-          ) : chats.length === 0 ? (
+          ) : filteredChats.length === 0 ? (
             <div className='bg-white rounded-lg shadow-xs border border-gray-500 p-16 text-center '>
               <div className='w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4'>
                 <MessageCircle className='w-8 h-8 text-gray-400' />
@@ -90,10 +123,12 @@ const Messages = () => {
 
 
               {
-                chats.map((chat) => {
-                  const chatUser = chat.chatUserId === user.id ? chat.chatUser : chat.ownerUser;
+                filteredChats.map((chat) => {
+                  const chatUser = chat.chatUserId === user.id ? chat.ownerUser : chat.chatUser;
                   return (
-                    <button key={chat.id}
+                    <button
+                      onClick={() => handleOpenChat(chat)}
+                      key={chat.id}
                       className='w-full p-4 hover:bg-gray-50 transition-colors text-left'>
                       <div className='flex items-start space-x-4'>
                         <div className='flex-shrink-0'>
@@ -135,8 +170,6 @@ const Messages = () => {
             </div>
           )
         }
-
-
 
 
 
