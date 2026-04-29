@@ -11,18 +11,18 @@ import { Toaster } from 'react-hot-toast'
 import Loading from './pages/Loading'
 import Navbar from './Components/Navbar'
 import ChatBox from './Components/ChatBox'
+import Footer from './Components/Footer'
 
 const App = () => {
   const { pathname } = useLocation();
 
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <Toaster position="top-center" />
 
       {!pathname.includes('/admin') && <Navbar />}
 
-      <div className={!pathname.includes('/admin') && pathname !== '/' ? 'pt-24' : ''}>
+      <div className={`flex-grow ${!pathname.includes('/admin') && pathname !== '/' ? 'pt-24' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/marketplace" element={<Marketplace />} />
@@ -36,6 +36,8 @@ const App = () => {
         </Routes>
         <ChatBox />
       </div>
+      
+      {!pathname.includes('/admin') && <Footer />}
     </div>
   )
 }
