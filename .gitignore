@@ -1,0 +1,31 @@
+# Dependency directories
+node_modules/
+**/node_modules/
+
+# Environment files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Production/build outputs
+dist/
+dist-ssr/
+build/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
