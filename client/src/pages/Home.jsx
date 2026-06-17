@@ -3,7 +3,6 @@ import Hero from '../Components/Hero'
 import LatestListings from '../Components/LatestListings'
 import Plans from '../Components/Plans'
 import CTA from '../Components/CTA'
-import Footer from '../Components/Footer'
 
 const Home = () => {
   return (
@@ -12,7 +11,6 @@ const Home = () => {
       <LatestListings />
       <Plans />
       <CTA />
-      <Footer />
     </div>
   )
 }
