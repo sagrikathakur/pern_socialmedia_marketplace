@@ -12,9 +12,15 @@ app.use(express.json());
 app.use(cors());
 app.use(clerkMiddleware());
 
-// Mount Inngest Express middleware
+// Mount Inngest Express middleware//
+app.get("/", (req, res) => {
+  res.send("Hello World");
+})
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+export default app;
+
