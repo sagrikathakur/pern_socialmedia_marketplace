@@ -1,18 +1,57 @@
-import { ArrowDownCircleIcon, CheckCircle, CoinsIcon, DollarSign, Eye, Plus, PlusIcon, StarIcon, TrendingUp, WalletIcon, Search } from 'lucide-react'
-import { useState } from 'react'
-import { useSelector } from 'react-redux'
+import { ArrowDownCircleIcon, CheckCircle, CoinsIcon, DollarSign, Eye, Plus, PlusIcon, StarIcon, TrendingUp, WalletIcon, Search, Loader2Icon } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@clerk/react'
+import { setUserListings, setBalance } from '../App/features/listingSlice'
 import StatsCard from '../Components/StatsCard'
 import { platformIcons } from '../assets/assets'
 
 const MyListings = () => {
-
+  const dispatch = useDispatch()
+  const { getToken, isLoaded, isSignedIn } = useAuth()
   const { userListings, balance } = useSelector((state) => state.listing)
   const currency = import.meta.env.VITE_CURRENCY || '$'
   const navigate = useNavigate()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchUserListings = async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+        const response = await fetch(`${BACKEND_URL}/api/listings/user/all`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          dispatch(setUserListings(data.listings));
+          dispatch(setBalance(data.balance));
+        }
+      } catch (error) {
+        console.error("Error fetching user listings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserListings();
+  }, [dispatch, getToken, isLoaded, isSignedIn]);
 
   const totalValue = userListings.reduce((sum, listing) => sum + (listing.price || 0), 0);
   const activeListings = userListings.filter((listing) => listing.status === 'active').length;
@@ -44,6 +83,14 @@ const MyListings = () => {
 
 
 
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <Loader2Icon className='animate-spin text-indigo-600 size-8' />
+      </div>
+    );
+  }
 
   return (
     <div className='px-6 md:px-16 lg:px-24 xl:px-32 pt-8'>

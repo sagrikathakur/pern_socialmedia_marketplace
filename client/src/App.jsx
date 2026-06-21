@@ -1,5 +1,7 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { setListings } from './App/features/listingSlice'
 import Home from './pages/Home'
 import Marketplace from './pages/Marketplace'
 import ListingDetails from './pages/ListingDetails'
@@ -22,6 +24,23 @@ import Withdrawal from './pages/admin/Withdrawal'
 
 const App = () => {
   const { pathname } = useLocation();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+        const response = await fetch(`${BACKEND_URL}/api/listings`);
+        const data = await response.json();
+        if (data.success) {
+          dispatch(setListings(data.listings));
+        }
+      } catch (error) {
+        console.error("Failed to fetch listings:", error);
+      }
+    };
+    fetchListings();
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

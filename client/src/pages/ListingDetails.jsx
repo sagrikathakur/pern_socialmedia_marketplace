@@ -15,8 +15,35 @@ const ListingDetails = () => {
 
   const { listingId } = useParams()
   const { listings } = useSelector((state) => state.listing)
+  const [listing, setListing] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const listing = listings.find((item) => item.id === listingId) || null;
+  useEffect(() => {
+    const fetchListingDetails = async () => {
+      try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+        const response = await fetch(`${BACKEND_URL}/api/listings/${listingId}`);
+        const data = await response.json();
+        if (data.success) {
+          setListing(data.listing);
+        }
+      } catch (error) {
+        console.error("Error fetching listing details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Check if we have it in store first, otherwise fetch from backend
+    const storeListing = listings.find((item) => item.id === listingId);
+    if (storeListing) {
+      setListing(storeListing);
+      setLoading(false);
+    } else {
+      fetchListingDetails();
+    }
+  }, [listingId, listings]);
+
   const profileLink = listing && getProfileLink(listing.platform, listing.username)
 
   const [current, setCurrent] = useState(0)
@@ -348,8 +375,15 @@ const ListingDetails = () => {
 
     </div>
   ) : (
-    <div className='h-screen flex justify-center items-center'>
-      <Loader2Icon className='size-7 animate-spin text-indigo-600' />
+    <div className='h-screen flex flex-col justify-center items-center gap-4'>
+      {loading ? (
+        <Loader2Icon className='size-7 animate-spin text-indigo-600' />
+      ) : (
+        <>
+          <p className="text-gray-500 font-semibold text-lg">Listing not found</p>
+          <button onClick={() => navigate('/marketplace')} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Go to Marketplace</button>
+        </>
+      )}
     </div>
   )
 }

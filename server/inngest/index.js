@@ -49,13 +49,25 @@ const syncUserDeletion = inngest.createFunction(
       where: { OR: [{ ownerUserId: data.id }, { chatUserId: data.id }] }
     });
     const transactions = await prisma.transaction.findMany({
+      where: { OR: [{ userId: data.id }, { ownerId: data.id }] }
+    });
+    const withdrawals = await prisma.withdrawal.findMany({
       where: { userId: data.id }
     });
 
-    if (listings.length === 0 && chats.length === 0 && transactions.length === 0) {
-      await prisma.user.delete({
-        where: { id: data.id }
-      });
+    if (listings.length === 0 && chats.length === 0 && transactions.length === 0 && withdrawals.length === 0) {
+      try {
+        await prisma.user.deleteMany({
+          where: { id: data.id }
+        });
+      } catch (error) {
+        console.error(`Failed to delete user ${data.id}:`, error);
+        // Fallback: update listings to inactive
+        await prisma.listing.updateMany({
+          where: { ownerId: data.id },
+          data: { status: 'inactive' }
+        });
+      }
     } else {
       await prisma.listing.updateMany({
         where: { ownerId: data.id },

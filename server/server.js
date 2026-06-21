@@ -4,6 +4,7 @@ import cors from "cors";
 import { clerkMiddleware } from '@clerk/express';
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
+import listingRouter from "./routes/listingRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -11,6 +12,9 @@ const PORT = process.env.PORT || 8000;
 app.use(express.json());
 app.use(cors());
 app.use(clerkMiddleware());
+
+// Mount routers
+app.use("/api/listings", listingRouter);
 
 // Mount Inngest Express middleware//
 app.get("/", (req, res) => {

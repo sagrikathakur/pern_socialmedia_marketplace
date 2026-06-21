@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { useAuth } from '@clerk/react';
 import { 
   Save, 
   X, 
@@ -11,7 +12,8 @@ import {
   DollarSign, 
   FileText,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2Icon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -29,10 +31,25 @@ const ManageListing = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   
   const { userListings } = useSelector((state) => state.listing);
-  // Optional dispatch if backend/redux actions are available
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      toast.error("Please log in to manage listings.");
+      navigate('/');
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  if (!isLoaded) {
+    return (
+      <div className='h-screen flex justify-center items-center'>
+        <Loader2Icon className='size-7 animate-spin text-indigo-600' />
+      </div>
+    );
+  }
 
   const [formData, setFormData] = useState({
     title: '',
@@ -80,7 +97,7 @@ const ManageListing = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Basic validation
@@ -90,12 +107,36 @@ const ManageListing = () => {
     }
 
     try {
-      // Future: dispatch action to save data to backend
-      console.log('Submitting data:', formData);
+      const token = await getToken();
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const url = isEditMode 
+        ? `${BACKEND_URL}/api/listings/${id}` 
+        : `${BACKEND_URL}/api/listings`;
+        
+      const response = await fetch(url, {
+        method: isEditMode ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          followers_count: parseFloat(formData.followers_count) || 0,
+          engagement_rate: parseFloat(formData.engagement_rate) || 0,
+          monthly_views: parseFloat(formData.monthly_views) || 0,
+          price: parseFloat(formData.price) || 0
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to save listing');
+      }
+
       toast.success(isEditMode ? 'Listing updated successfully!' : 'Listing created successfully!');
       navigate('/my-listings');
     } catch (error) {
-      toast.error('Failed to save listing');
+      toast.error(error.message || 'Failed to save listing');
     }
   };
 

@@ -1,12 +1,29 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ArrowLeftIcon, Filter, FilterIcon } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import ListingCard from '../Components/ListingCard'
 import FilteredSidebar from '../Components/FilteredSidebar'
+import { setListings } from '../App/features/listingSlice'
 
 const Marketplace = () => {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+        const response = await fetch(`${BACKEND_URL}/api/listings`);
+        const data = await response.json();
+        if (data.success) {
+          dispatch(setListings(data.listings));
+        }
+      } catch (error) {
+        console.error("Error fetching listings:", error);
+      }
+    };
+    fetchListings();
+  }, [dispatch]);
 
 
   const [searchParams] = useSearchParams()
