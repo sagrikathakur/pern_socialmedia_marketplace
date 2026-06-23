@@ -12,7 +12,8 @@ import {
   ExternalLink,
   ChevronRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { dummyOrders, platformIcons, getProfileLink } from '../assets/assets';
 import toast from 'react-hot-toast';

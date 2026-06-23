@@ -36,21 +36,6 @@ const ManageListing = () => {
   const { userListings } = useSelector((state) => state.listing);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      toast.error("Please log in to manage listings.");
-      navigate('/');
-    }
-  }, [isLoaded, isSignedIn, navigate]);
-
-  if (!isLoaded) {
-    return (
-      <div className='h-screen flex justify-center items-center'>
-        <Loader2Icon className='size-7 animate-spin text-indigo-600' />
-      </div>
-    );
-  }
-
   const [formData, setFormData] = useState({
     title: '',
     platform: platforms[0],
@@ -66,6 +51,14 @@ const ManageListing = () => {
   });
 
   useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      toast.error("Please log in to manage listings.");
+      navigate('/');
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
     if (isEditMode) {
       const listingToEdit = userListings.find(list => list.id === id);
       if (listingToEdit) {
@@ -87,7 +80,15 @@ const ManageListing = () => {
         navigate('/my-listings');
       }
     }
-  }, [id, isEditMode, userListings, navigate]);
+  }, [id, isEditMode, userListings, navigate, isLoaded]);
+
+  if (!isLoaded) {
+    return (
+      <div className='h-screen flex justify-center items-center'>
+        <Loader2Icon className='size-7 animate-spin text-indigo-600' />
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
