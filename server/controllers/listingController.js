@@ -1,5 +1,7 @@
 import prisma from '../configs/prisma.js';
 import { clerkClient } from '@clerk/express';
+import fs from 'fs';
+import imagekit from '../configs/imageKit.js';
 // Helper to fetch/create a user in our local database if they do not exist
 const getOrCreateUser = async (userId) => {
   let user = await prisma.user.findUnique({
@@ -94,6 +96,38 @@ export const createListing = async (req, res) => {
     // Ensure owner exists in local database
     await getOrCreateUser(ownerId);
 
+    // Upload files to ImageKit if provided
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const response = await imagekit.files.upload({
+            file: fs.createReadStream(file.path),
+            fileName: file.originalname,
+          });
+          imageUrls.push(response.url);
+          fs.unlinkSync(file.path);
+        } catch (uploadError) {
+          console.error("ImageKit upload error:", uploadError);
+          try {
+            fs.unlinkSync(file.path);
+          } catch (cleanupError) {
+            console.error("Failed to delete local file:", cleanupError);
+          }
+          return res.status(500).json({
+            success: false,
+            message: `Failed to upload image(s) to ImageKit: ${uploadError.message}`
+          });
+        }
+      }
+    } else if (images) {
+      try {
+        imageUrls = Array.isArray(images) ? images : JSON.parse(images);
+      } catch {
+        imageUrls = [images];
+      }
+    }
+
     // Create listing
     const listing = await prisma.listing.create({
       data: {
@@ -111,7 +145,7 @@ export const createListing = async (req, res) => {
         monetized: monetized === true || monetized === 'true',
         country: country || null,
         age_range: age_range || '18-24',
-        images: Array.isArray(images) ? images : [],
+        images: imageUrls,
       }
     });
 
@@ -297,6 +331,38 @@ export const updateListing = async (req, res) => {
       status
     } = req.body;
 
+    // Upload files to ImageKit if provided
+    let imageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        try {
+          const response = await imagekit.files.upload({
+            file: fs.createReadStream(file.path),
+            fileName: file.originalname,
+          });
+          imageUrls.push(response.url);
+          fs.unlinkSync(file.path);
+        } catch (uploadError) {
+          console.error("ImageKit upload error:", uploadError);
+          try {
+            fs.unlinkSync(file.path);
+          } catch (cleanupError) {
+            console.error("Failed to delete local file:", cleanupError);
+          }
+          return res.status(500).json({
+            success: false,
+            message: `Failed to upload image(s) to ImageKit: ${uploadError.message}`
+          });
+        }
+      }
+    } else if (images) {
+      try {
+        imageUrls = Array.isArray(images) ? images : JSON.parse(images);
+      } catch {
+        imageUrls = [images];
+      }
+    }
+
     const data = {};
     if (title !== undefined) data.title = title;
     if (platform !== undefined) data.platform = platform.toLowerCase();
@@ -311,7 +377,14 @@ export const updateListing = async (req, res) => {
     if (monetized !== undefined) data.monetized = monetized === true || monetized === 'true';
     if (country !== undefined) data.country = country;
     if (age_range !== undefined) data.age_range = age_range;
-    if (images !== undefined) data.images = Array.isArray(images) ? images : [];
+    
+    // Update images if files were uploaded or images parameter was sent
+    if (req.files && req.files.length > 0) {
+      data.images = imageUrls;
+    } else if (images !== undefined) {
+      data.images = imageUrls;
+    }
+    
     if (status !== undefined) {
       const allowedStatuses = ['active', 'ban', 'sold', 'deleted', 'inactive'];
       if (allowedStatuses.includes(status)) {

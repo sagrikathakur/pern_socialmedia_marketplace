@@ -5,6 +5,7 @@ import { clerkMiddleware } from '@clerk/express';
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import listingRouter from "./routes/listingRoutes.js";
+import chatRouter from "./routes/chatRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -15,6 +16,7 @@ app.use(clerkMiddleware());
 
 // Mount routers
 app.use("/api/listings", listingRouter);
+app.use("/api/chats", chatRouter);
 
 // Mount Inngest Express middleware//
 app.get("/", (req, res) => {
