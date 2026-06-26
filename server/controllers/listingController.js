@@ -1,6 +1,5 @@
 import prisma from '../configs/prisma.js';
 import { clerkClient } from '@clerk/express';
-
 // Helper to fetch/create a user in our local database if they do not exist
 const getOrCreateUser = async (userId) => {
   let user = await prisma.user.findUnique({

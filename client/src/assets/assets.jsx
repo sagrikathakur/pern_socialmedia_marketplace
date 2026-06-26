@@ -1,5 +1,5 @@
 import logo from './logo.svg';
-import { Youtube, Instagram, Music2, Facebook, Twitter, Linkedin, Pin, Camera, Gamepad2, MessageCircle } from 'lucide-react';
+import { Youtube, Instagram, Music2, Facebook, Twitter, Linkedin, Pin, Camera, Gamepad2, MessageCircle, YoutubeIcon } from 'lucide-react';
 import image_1 from './image_1.jpg';
 import image_2 from './image_2.jpg';
 import image_3 from './image_3.jpg';
@@ -45,7 +45,7 @@ export function getProfileLink(platform, username) {
 }
 
 export const platformIcons = {
-    youtube: <Youtube color='#FF0000' className='bg-[#FF000010] size-10 p-2 rounded' />,
+    youtube: <YoutubeIcon color='#FF0000' className='bg-[#FF000010] size-10 p-2 rounded' />,
     instagram: <Instagram color='#E1306C' className='bg-[#E1306C10] size-10 p-2 rounded' />,
     tiktok: <Music2 color='#000000' className='bg-[#00000010] size-10 p-2 rounded' />,
     facebook: <Facebook color='#1877F2' className='bg-[#1877F210] size-10 p-2 rounded' />,
