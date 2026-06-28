@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { XIcon, Loader2Icon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@clerk/react';
 
 const WithdrawModel = ({ onClose }) => {
+  const { getToken } = useAuth();
   const [amount, setAmount] = useState("");
   const [account, setAccount] = useState([
     { type: 'text', name: 'Account Holder Name', value: '' },
@@ -33,11 +35,25 @@ const WithdrawModel = ({ onClose }) => {
 
     setLoading(true);
     try {
-      // Simulated API call or actual function
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Withdrawal request submitted successfully!');
-      if (onClose) onClose();
+      const token = await getToken();
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/withdrawals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount: Number(amount), account })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Withdrawal request submitted successfully!');
+        if (onClose) onClose();
+      } else {
+        toast.error(data.message || 'Failed to submit withdrawal request.');
+      }
     } catch (error) {
+      console.error("Error submitting withdrawal:", error);
       toast.error('Failed to submit withdrawal request.');
     } finally {
       setLoading(false);

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { dummyChats } from '../assets/assets';
 import { MessageCircle, Search } from 'lucide-react';
 import format from 'date-fns/format';
 import isToday from 'date-fns/isToday';
@@ -7,14 +6,16 @@ import isYesterday from 'date-fns/isYesterday';
 import parseISO from 'date-fns/parseISO';
 import { useDispatch } from 'react-redux';
 import { setChat } from '../App/features/chatSlice';
+import { useAuth } from '@clerk/react';
 
 const Messages = () => {
   const dispatch = useDispatch()
-  const user = { id: "user_1" };
+  const { getToken, userId, isLoaded, isSignedIn } = useAuth();
   const [chats, setChats] = useState([])
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const user = useMemo(() => ({ id: userId }), [userId]);
 
   const formatTime = (dateString) => {
     if (!dateString) return;
@@ -41,7 +42,7 @@ const Messages = () => {
 
       return chat.listing?.title?.toLowerCase().includes(query) || chatUser?.name?.toLowerCase().includes(query);
     })
-  }, [chats, searchQuery])
+  }, [chats, searchQuery, user])
 
 
   // open chat//
@@ -50,34 +51,60 @@ const Messages = () => {
     dispatch(setChat({ listing: chat.listing, chatId: chat.id }))
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
   const fetchUserChats = async () => {
-    setChats(dummyChats)
-    setLoading(false)
-  }
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/chats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setChats(data.chats);
+      }
+    } catch (error) {
+      console.error("Error fetching user chats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetchUserChats()
-    const interval = setInterval(() => {
+    if (isLoaded && isSignedIn) {
       fetchUserChats();
-    }, 10 * 1000);
-    return () => clearInterval(interval);
-  }, [])
+      const interval = setInterval(() => {
+        fetchUserChats();
+      }, 10 * 1000);
+      return () => clearInterval(interval);
+    } else if (isLoaded && !isSignedIn) {
+      setLoading(false);
+    }
+  }, [isLoaded, isSignedIn]);
 
 
 
 
+
+  if (!isLoaded || loading) {
+    return (
+      <div className='mx-auto min-h-screen flex items-center justify-center'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600'></div>
+      </div>
+    )
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className='mx-auto min-h-screen px-6 py-20 text-center flex flex-col items-center justify-center'>
+        <MessageCircle className='w-12 h-12 text-gray-300 mb-4' />
+        <h3 className='text-xl font-medium text-gray-800 mb-2'>Please log in</h3>
+        <p className='text-gray-600 mb-6'>You must be logged in to view your messages.</p>
+      </div>
+    )
+  }
 
   return (
     <div className='mx-auto min-h-screen px-6 md:px-16 lg:px-24 xl:px-32'>

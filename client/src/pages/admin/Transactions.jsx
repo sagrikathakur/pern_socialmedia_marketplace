@@ -3,18 +3,34 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import ListingDetailsModal from '../../Components/admin/ListingDetailsModal';
 import { Loader2Icon } from 'lucide-react';
-import { dummyOrders } from '../../assets/assets';
+import { useAuth } from '@clerk/react';
 
 const Transactions = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$';
+    const { getToken } = useAuth();
 
     const [trasactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(null);
 
     const getTransactions = async () => {
-        setTransactions(dummyOrders);
-        setLoading(false);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/transactions`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setTransactions(data.transactions);
+            }
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {

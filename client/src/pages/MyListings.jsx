@@ -1,11 +1,13 @@
 import { ArrowDownCircleIcon, CheckCircle, CoinsIcon, DollarSign, Eye, Plus, PlusIcon, StarIcon, TrendingUp, WalletIcon, Search, Loader2Icon } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/react'
 import { setUserListings, setBalance } from '../App/features/listingSlice'
 import StatsCard from '../Components/StatsCard'
 import { platformIcons } from '../assets/assets'
+import toast from 'react-hot-toast'
+import CredentialSubmission from '../Components/CredentialSubmission'
 
 const MyListings = () => {
   const dispatch = useDispatch()
@@ -17,6 +19,32 @@ const MyListings = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [showCredentialSubmission, setShowCredentialSubmission] = useState(null)
+
+  const fetchUserListings = useCallback(async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/listings/user/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        dispatch(setUserListings(data.listings));
+        dispatch(setBalance(data.balance));
+      }
+    } catch (error) {
+      console.error("Error fetching user listings:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [dispatch, getToken]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -26,32 +54,33 @@ const MyListings = () => {
       return;
     }
 
-    const fetchUserListings = async () => {
-      try {
-        const token = await getToken();
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
-        const response = await fetch(`${BACKEND_URL}/api/listings/user/all`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-        if (data.success) {
-          dispatch(setUserListings(data.listings));
-          dispatch(setBalance(data.balance));
-        }
-      } catch (error) {
-        console.error("Error fetching user listings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUserListings();
-  }, [dispatch, getToken, isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, fetchUserListings]);
+
+  const handleCredentialSubmit = async (credentials) => {
+    try {
+      const token = await getToken();
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/credentials/submit/${showCredentialSubmission.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ credentials })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Credentials submitted successfully!");
+        fetchUserListings();
+      } else {
+        toast.error(data.message || "Failed to submit credentials.");
+      }
+    } catch (error) {
+      console.error("Error submitting credentials:", error);
+      toast.error("An error occurred during submission.");
+    }
+  };
 
   const totalValue = userListings.reduce((sum, listing) => sum + (listing.price || 0), 0);
   const activeListings = userListings.filter((listing) => listing.status === 'active').length;
@@ -283,6 +312,29 @@ const MyListings = () => {
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${listing.status === 'active' ? 'bg-green-100 text-green-700' : listing.status === 'sold' ? 'bg-indigo-100 text-indigo-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         {listing.status}
                       </span>
+                      {listing.status === 'sold' && !listing.isCredentialSubmitted && (
+                        <button
+                          onClick={() => setShowCredentialSubmission(listing)}
+                          className="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-2.5 rounded transition"
+                        >
+                          Submit Credentials
+                        </button>
+                      )}
+                      {listing.isCredentialSubmitted && !listing.isCredentialVerified && (
+                        <span className="text-[10px] text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded border border-yellow-100">
+                          Submitted (Verifying)
+                        </span>
+                      )}
+                      {listing.isCredentialVerified && !listing.isCredentialChanged && (
+                        <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                          Verified (Changing)
+                        </span>
+                      )}
+                      {listing.isCredentialChanged && (
+                        <span className="text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                          Handover Complete
+                        </span>
+                      )}
                     </div>
                     <div className='flex items-center gap-4'>
                       <span className='font-bold text-gray-800 text-lg'>
@@ -293,6 +345,13 @@ const MyListings = () => {
                 </div>
               </div>
             ))}
+            {showCredentialSubmission && (
+              <CredentialSubmission
+                listing={showCredentialSubmission}
+                onClose={() => setShowCredentialSubmission(null)}
+                onSubmit={handleCredentialSubmit}
+              />
+            )}
 
           </div>
         )

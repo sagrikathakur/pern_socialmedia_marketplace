@@ -2,20 +2,58 @@ import AdminTitle from '../../Components/admin/AdminTitle';
 import { useEffect, useState } from 'react';
 import { CheckCircleIcon, Loader2Icon, MailCheckIcon, XIcon } from 'lucide-react';
 import ListingDetailsModal from '../../Components/admin/ListingDetailsModal';
-import { dummyListings } from '../../assets/assets';
+import { useAuth } from '@clerk/react';
+import toast from 'react-hot-toast';
 
 const AllListings = () => {
+    const { getToken } = useAuth();
     const [loading, setLoading] = useState(true);
     const [listings, setListings] = useState([]);
     const [showModal, setShowModal] = useState(null);
 
     const fetchAllListings = async () => {
-        setListings(dummyListings);
-        setLoading(false);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/listings/admin/all`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setListings(data.listings);
+            }
+        } catch (error) {
+            console.error("Error fetching admin listings:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const changeListingStatus = async (status, listing) => {
-        setListings((prev) => [...prev.filter((l) => l.id !== listing.id), { ...listing, status }]);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/listings/${listing.id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success("Listing status updated!");
+                setListings((prev) => prev.map((l) => l.id === listing.id ? { ...l, status } : l));
+            } else {
+                toast.error(data.message || "Failed to update status.");
+            }
+        } catch (error) {
+            console.error("Error changing status:", error);
+            toast.error("An error occurred.");
+        }
     };
 
     const colorMapCredentials = {

@@ -2,18 +2,34 @@ import { useEffect, useState } from 'react';
 import { Loader2Icon } from 'lucide-react';
 import AdminTitle from '../../Components/admin/AdminTitle';
 import WithdrawalDetail from '../../Components/admin/WithdrawalDetail';
-import { dummyWithdrawalRequests } from '../../assets/assets';
+import { useAuth } from '@clerk/react';
 
 const Withdrawal = () => {
     const currency = import.meta.env.VITE_CURRENCY || '$';
+    const { getToken } = useAuth();
 
     const [requests, setRequests] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState(null);
 
     const getRequests = async () => {
-        setRequests(dummyWithdrawalRequests);
-        setIsLoading(false);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/withdrawals`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setRequests(data.withdrawals);
+            }
+        } catch (error) {
+            console.error("Error fetching withdrawals:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {

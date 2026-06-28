@@ -9,7 +9,8 @@ import {
   deleteListing,
   getUserListings,
   updateListingStatus,
-  updateCredentials
+  updateCredentials,
+  getAdminListings
 } from '../controllers/listingController.js';
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.get('/:id', getListingById);
 
 // Authenticated routes
 router.get('/user/all', requireAuth, getUserListings); // Changed from /user to /user/all or router order, let's keep /user/all so it does not conflict with /:id
+router.get('/admin/all', requireAuth, getAdminListings);
 router.post('/', requireAuth, upload.array('images', 5), createListing);
 router.put('/:id', requireAuth, upload.array('images', 5), updateListing);
 router.delete('/:id', requireAuth, deleteListing);

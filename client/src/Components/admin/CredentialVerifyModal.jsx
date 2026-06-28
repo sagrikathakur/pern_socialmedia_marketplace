@@ -3,9 +3,10 @@ import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { ArrowUpRightFromSquareIcon, CopyIcon, Loader2Icon, XIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { dummyOrders, getProfileLink } from '../../assets/assets';
+import { useAuth } from '@clerk/react';
 
 const CredentialVerifyModal = ({ listing, onClose }) => {
+    const { getToken } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [credential, setCredential] = useState(null);
@@ -19,12 +20,46 @@ const CredentialVerifyModal = ({ listing, onClose }) => {
     };
 
     const fetchCredential = async () => {
-        setCredential(dummyOrders[0].credential)
-        setLoading(false);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/credentials/${listing.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setCredential(data.credential);
+            }
+        } catch (error) {
+            console.error("Error fetching credentials:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const verifyCredential = async () => {
-
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/credentials/${listing.id}/verify`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success("Credentials verified successfully!");
+                if (onClose) onClose();
+            } else {
+                toast.error(data.message || "Failed to verify credentials.");
+            }
+        } catch (error) {
+            console.error("Error verifying credentials:", error);
+            toast.error("An error occurred.");
+        }
     };
 
     useEffect(() => {

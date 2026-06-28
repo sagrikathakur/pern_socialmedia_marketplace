@@ -3,17 +3,34 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import { Loader2Icon } from 'lucide-react';
 import CredentialChangeModal from '../../Components/admin/CredentialChangeModal';
-import { dummyListings } from '../../assets/assets';
+import { useAuth } from '@clerk/react';
 
 const CredentialChange = () => {
+    const { getToken } = useAuth();
 
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(null);
 
     const fetchAllUnchangedListings = async () => {
-        setListings(dummyListings);
-        setLoading(false);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/listings/admin/all`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                const unchanged = data.listings.filter(l => l.isCredentialVerified && !l.isCredentialChanged);
+                setListings(unchanged);
+            }
+        } catch (error) {
+            console.error("Error fetching listings for change:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {

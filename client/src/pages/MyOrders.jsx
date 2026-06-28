@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
   DollarSign, 
@@ -15,20 +15,54 @@ import {
   AlertCircle,
   X
 } from 'lucide-react';
-import { dummyOrders, platformIcons, getProfileLink } from '../assets/assets';
+import { platformIcons, getProfileLink } from '../assets/assets';
 import toast from 'react-hot-toast';
+import { useAuth } from '@clerk/react';
 
 const MyOrders = () => {
   const currency = import.meta.env.VITE_CURRENCY || '$';
+  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
   const [showPasswordMap, setShowPasswordMap] = useState({});
   const [copiedField, setCopiedField] = useState(null);
 
+  const fetchOrders = async () => {
+    try {
+      const token = await getToken();
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/transactions/user/all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setOrders(data.transactions);
+      }
+    } catch (error) {
+      console.error("Error fetching purchases:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (isSignedIn) {
+        fetchOrders();
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [isLoaded, isSignedIn]);
+
   // Stats
-  const totalOrders = dummyOrders.length;
-  const totalSpent = dummyOrders.reduce((sum, order) => sum + (order.amount || 0), 0);
-  const completedTransfers = dummyOrders.filter(order => order.listing?.isCredentialChanged).length;
+  const totalOrders = orders.length;
+  const totalSpent = orders.reduce((sum, order) => sum + (order.amount || 0), 0);
+  const completedTransfers = orders.filter(order => order.listing?.isCredentialChanged).length;
   const pendingTransfers = totalOrders - completedTransfers;
 
   const handleCopy = (text, fieldId) => {
@@ -49,6 +83,24 @@ const MyOrders = () => {
     setSelectedOrder(order);
     setShowCredentialsModal(true);
   };
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-[60vh]'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600'></div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className='flex flex-col items-center justify-center min-h-[60vh] px-6 text-center'>
+        <ShoppingBag className='size-12 text-gray-300 mb-4' />
+        <h3 className='text-lg font-medium text-gray-800 mb-1'>Please log in</h3>
+        <p className='text-gray-500 text-sm'>You must be logged in to view your purchases.</p>
+      </div>
+    );
+  }
 
   return (
     <div className='px-6 md:px-16 lg:px-24 xl:px-32 pt-8 pb-16 bg-gray-50/50 min-h-screen'>
@@ -107,7 +159,7 @@ const MyOrders = () => {
           <h2 className='font-semibold text-gray-800'>Recent Purchases</h2>
         </div>
 
-        {dummyOrders.length === 0 ? (
+        {orders.length === 0 ? (
           <div className='p-12 text-center'>
             <ShoppingBag className='size-12 text-gray-300 mx-auto mb-4' />
             <h3 className='text-lg font-medium text-gray-800 mb-1'>No purchases found</h3>
@@ -115,7 +167,7 @@ const MyOrders = () => {
           </div>
         ) : (
           <div className='divide-y divide-gray-100'>
-            {dummyOrders.map((order) => {
+            {orders.map((order) => {
               const listing = order.listing || {};
               const isSecured = listing.isCredentialChanged;
               

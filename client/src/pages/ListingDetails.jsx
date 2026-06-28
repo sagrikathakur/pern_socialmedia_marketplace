@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { ArrowLeftIcon, ArrowUpRightFromSquareIcon, Calendar, CheckCircle2, ChevronLeftIcon, ChevronRightIcon, DollarSign, Eye, Globe, LineChart, Loader2Icon, MessageSquareIcon, ShieldCheck, Tag, Users } from 'lucide-react'
 import { getProfileLink, platformIcons } from '../assets/assets'
 import { setChat } from '../App/features/chatSlice'
+import { useAuth } from '@clerk/react'
+import toast from 'react-hot-toast'
 
 
 const ListingDetails = () => {
@@ -11,6 +13,7 @@ const ListingDetails = () => {
   const dispatch = useDispatch()
 
   const navigate = useNavigate()
+  const { getToken, userId, isSignedIn } = useAuth()
   const currency = import.meta.env.VITE_CURRENCY || '$'
 
   const { listingId } = useParams()
@@ -54,8 +57,36 @@ const ListingDetails = () => {
 
 
   const purchaseAccount = async () => {
+    if (!isSignedIn) {
+      toast.error("Please log in to purchase this account.");
+      return;
+    }
+    const confirmPurchase = window.confirm(`Are you sure you want to purchase this account for ${currency}${listing.price.toLocaleString()}?`);
+    if (!confirmPurchase) return;
 
-  }
+    try {
+      const token = await getToken();
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/transactions/purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ listingId: listing.id })
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Purchase successful!");
+        navigate('/my-orders');
+      } else {
+        toast.error(data.message || "Failed to complete purchase.");
+      }
+    } catch (error) {
+      console.error("Error purchasing listing:", error);
+      toast.error("An error occurred during purchase.");
+    }
+  };
 
   const loadChatbox = () => {
     dispatch(setChat({ listing: listing }))
@@ -355,11 +386,11 @@ const ListingDetails = () => {
               Chat
             </button>
             {
-              listing.isCredentialChanged && (
+              listing.status === 'active' && listing.ownerId !== userId && (
                 <button onClick={purchaseAccount}
-                  className="w-full mt-2 bg-purple-600 text-white py-2 rounded-lg py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium flex items-center justify-center gap-2">
-                  <MessageSquareIcon className='size-4' />
-                  Purchase
+                  className="w-full mt-2 bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition text-sm font-medium flex items-center justify-center gap-2">
+                  <DollarSign className='size-4' />
+                  Purchase Account
                 </button>
               )
             }

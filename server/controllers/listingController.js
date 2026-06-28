@@ -3,7 +3,7 @@ import { clerkClient } from '@clerk/express';
 import fs from 'fs';
 import imagekit from '../configs/imageKit.js';
 // Helper to fetch/create a user in our local database if they do not exist
-const getOrCreateUser = async (userId) => {
+export const getOrCreateUser = async (userId) => {
   let user = await prisma.user.findUnique({
     where: { id: userId }
   });
@@ -574,6 +574,35 @@ export const updateCredentials = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating listing credentials:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get all listings for admin
+export const getAdminListings = async (req, res) => {
+  try {
+    const listings = await prisma.listing.findMany({
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      listings
+    });
+  } catch (error) {
+    console.error("Error fetching admin listings:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

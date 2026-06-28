@@ -1,8 +1,10 @@
 import toast from 'react-hot-toast';
 import { XIcon, CopyIcon } from 'lucide-react';
+import { useAuth } from '@clerk/react';
 
 const WithdrawalDetail = ({ data, onClose }) => {
     const currency = import.meta.env.VITE_CURRENCY || '$';
+    const { getToken } = useAuth();
 
     const copyToClipboard = ({ name, value }) => {
         navigator.clipboard.writeText(value || '');
@@ -10,7 +12,26 @@ const WithdrawalDetail = ({ data, onClose }) => {
     };
 
     const markAsWithdrawn = async () => {
-        
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/withdrawals/${data.id}/withdraw`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const resData = await response.json();
+            if (resData.success) {
+                toast.success("Withdrawal processed successfully!");
+                if (onClose) onClose();
+            } else {
+                toast.error(resData.message || "Failed to process withdrawal.");
+            }
+        } catch (error) {
+            console.error("Error processing withdrawal:", error);
+            toast.error("An error occurred.");
+        }
     };
 
     return (

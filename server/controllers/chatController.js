@@ -223,11 +223,16 @@ export const getChatMessages = async (req, res) => {
     }
 
     const messages = await prisma.message.findMany({
-      where: { chatId },
-      orderBy: { createdAt: 'asc' }
+      where: { chatId }
     });
 
-    res.status(200).json({ success: true, messages });
+    const platformMessages = await prisma.platformMessage.findMany({
+      where: { chatId }
+    });
+
+    const allMessages = [...messages, ...platformMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    res.status(200).json({ success: true, messages: allMessages });
   } catch (error) {
     console.error("Error getting chat messages:", error);
     res.status(500).json({ success: false, message: error.message });

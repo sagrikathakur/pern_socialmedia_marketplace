@@ -3,16 +3,17 @@ import { useSelector, useDispatch } from 'react-redux'
 import { X, Send, MessageSquare, Loader2, Paperclip, MoreVertical, ShieldCheck } from 'lucide-react'
 import { clearChat } from '../App/features/chatSlice'
 import { platformIcons } from '../assets/assets'
+import { useAuth } from '@clerk/react'
+import toast from 'react-hot-toast'
 
 const ChatBox = () => {
   const dispatch = useDispatch()
-  const { listing, isOpen } = useSelector((state) => state.chat)
-  
-  // Mock user for UI demonstration
-  const user = { id: 'user_2', name: 'Sophia Lee' }
+  const { listing, isOpen, chatId: initialChatId } = useSelector((state) => state.chat)
+  const { getToken, userId, isSignedIn } = useAuth()
   
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState("")
+  const [activeChatId, setActiveChatId] = useState(initialChatId)
   const [isLoading, setIsLoading] = useState(false)
   const [isSending, setIsSending] = useState(false)
   
@@ -26,52 +27,87 @@ const ChatBox = () => {
   }, [messages])
 
   useEffect(() => {
-    if (isOpen) {
-      const loadMessages = async () => {
-        setIsLoading(true)
-        // Mock API delay
-        await new Promise(resolve => setTimeout(resolve, 800))
-        setMessages([
-          {
-            id: 'm1',
-            sender_id: 'user_1',
-            message: `Hi! I saw your ${listing?.platform} listing "${listing?.title}". Is it still available?`,
-            createdAt: new Date(Date.now() - 3600000).toISOString()
-          },
-          {
-            id: 'm2',
-            sender_id: 'user_2',
-            message: "Yes, it is! I have several people interested but no deposit yet.",
-            createdAt: new Date(Date.now() - 1800000).toISOString()
+    if (isOpen && listing) {
+      const initChat = async () => {
+        setIsLoading(true);
+        try {
+          const token = await getToken();
+          const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+          
+          let cid = initialChatId;
+          // If no initialChatId, find or create the chat on the backend
+          if (!cid) {
+            const chatRes = await fetch(`${BACKEND_URL}/api/chats`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ listingId: listing.id })
+            });
+            const chatData = await chatRes.json();
+            if (chatData.success && chatData.chat) {
+              cid = chatData.chat.id;
+            }
           }
-        ])
-        setIsLoading(false)
-      }
-      loadMessages()
+          
+          setActiveChatId(cid);
+
+          if (cid) {
+            // Load messages
+            const msgRes = await fetch(`${BACKEND_URL}/api/chats/${cid}/messages`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            const msgData = await msgRes.json();
+            if (msgData.success) {
+              setMessages(msgData.messages);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading chat:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      initChat();
     } else {
-      setMessages([])
+      setMessages([]);
+      setActiveChatId(null);
     }
-  }, [isOpen, listing])
+  }, [isOpen, listing, initialChatId, getToken]);
 
-  const handleSend = (e) => {
-    e.preventDefault()
-    if (!newMessage.trim()) return
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activeChatId) return;
 
-    setIsSending(true)
-    
-    // Mock sending delay
-    setTimeout(() => {
-      const msg = {
-        id: Date.now().toString(),
-        sender_id: user.id,
-        message: newMessage,
-        createdAt: new Date().toISOString()
+    setIsSending(true);
+    try {
+      const token = await getToken();
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/chats/${activeChatId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: newMessage })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMessages(prev => [...prev, data.message]);
+        setNewMessage("");
+      } else {
+        toast.error(data.message || "Failed to send message.");
       }
-      setMessages(prev => [...prev, msg])
-      setNewMessage("")
-      setIsSending(false)
-    }, 400)
-  }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message.");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   if (!isOpen) return null
 
@@ -128,25 +164,38 @@ const ChatBox = () => {
             <p className='text-xs font-medium text-gray-500'>Loading conversation...</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div 
-              key={msg.id} 
-              className={`flex ${msg.sender_id === user.id ? 'justify-end' : 'justify-start'}`}
-            >
+          messages.map((msg) => {
+            const isPlatform = msg.sender_id === 'platform';
+            if (isPlatform) {
+              return (
+                <div key={msg.id} className="flex justify-center my-2">
+                  <div className="bg-gray-100 text-gray-600 rounded-lg px-4 py-2 text-xs text-center font-medium border border-gray-200/50 max-w-[90%] shadow-sm">
+                    {msg.message}
+                  </div>
+                </div>
+              );
+            }
+            const isSelf = msg.sender_id === userId;
+            return (
               <div 
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-all duration-200 ${
-                  msg.sender_id === user.id 
-                    ? 'bg-indigo-600 text-white rounded-tr-none' 
-                    : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
-                }`}
+                key={msg.id} 
+                className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}
               >
-                <p className='leading-relaxed'>{msg.message}</p>
-                <p className={`text-[9px] mt-1.5 ${msg.sender_id === user.id ? 'text-indigo-200 text-right' : 'text-gray-400'}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div 
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm shadow-sm transition-all duration-200 ${
+                    isSelf 
+                      ? 'bg-indigo-600 text-white rounded-tr-none' 
+                      : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
+                  }`}
+                >
+                  <p className='leading-relaxed'>{msg.message}</p>
+                  <p className={`text-[9px] mt-1.5 ${isSelf ? 'text-indigo-200 text-right' : 'text-gray-400'}`}>
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

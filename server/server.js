@@ -6,6 +6,9 @@ import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
 import listingRouter from "./routes/listingRoutes.js";
 import chatRouter from "./routes/chatRoutes.js";
+import transactionRouter from "./routes/transactionRoutes.js";
+import withdrawalRouter from "./routes/withdrawalRoutes.js";
+import credentialRouter from "./routes/credentialRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -17,6 +20,9 @@ app.use(clerkMiddleware());
 // Mount routers
 app.use("/api/listings", listingRouter);
 app.use("/api/chats", chatRouter);
+app.use("/api/transactions", transactionRouter);
+app.use("/api/withdrawals", withdrawalRouter);
+app.use("/api/credentials", credentialRouter);
 
 // Mount Inngest Express middleware//
 app.get("/", (req, res) => {

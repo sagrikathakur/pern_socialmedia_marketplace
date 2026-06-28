@@ -3,17 +3,34 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import CredentialVerifyModal from '../../Components/admin/CredentialVerifyModal';
 import { Loader2Icon } from 'lucide-react';
-import { dummyListings } from '../../assets/assets';
+import { useAuth } from '@clerk/react';
 
 const CredentialVerify = () => {
+    const { getToken } = useAuth();
 
     const [listings, setListings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(null);
 
     const fetchAllUnverifiedListings = async () => {
-        setListings(dummyListings);
-        setLoading(false);
+        try {
+            const token = await getToken();
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const response = await fetch(`${BACKEND_URL}/api/listings/admin/all`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                const unverified = data.listings.filter(l => l.isCredentialSubmitted && !l.isCredentialVerified);
+                setListings(unverified);
+            }
+        } catch (error) {
+            console.error("Error fetching listings for verification:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
